@@ -37,6 +37,7 @@ import roslib; roslib.load_manifest('nxt_ros')
 import nxt.locator
 import rospy
 import math
+import os
 from nxt.motor import PORT_A, PORT_B, PORT_C
 from nxt.sensor import PORT_1, PORT_2, PORT_3, PORT_4
 from nxt.sensor import Type
@@ -130,11 +131,11 @@ class Motor(Device):
             self.motor.reset_position(False)
 
         # create publisher
-        self.pub = rospy.Publisher('joint_state', JointState, queue_size=10)
+        self.pub = rospy.Publisher(rospy.get_param('~name') + '/joint_state', JointState, queue_size=10)
         self.last_js = None
 
         # create subscriber
-        self.sub = rospy.Subscriber('joint_command', JointCommand, self.cmd_cb, None, 2)
+        self.sub = rospy.Subscriber(rospy.get_param('~name') + '/joint_command', JointCommand, self.cmd_cb, None, 2)
 
         # Register the shutdown method
         rospy.on_shutdown(self.shutdown)
@@ -462,10 +463,11 @@ class LightSensor(Device):
 
 
 def main():
-    rospy.init_node('nxt_ros')
-    ns = 'nxt_robot'
-    host = rospy.get_param("~host", None)
-    b = nxt.locator.find_one_brick(host)
+    rospy.init_node('~')
+    ns = 'nxt_robot' # used to locate the sensor configurations in the config yaml file
+    conf = rospy.get_param("~confpath")
+    print('config: ' + conf)
+    b = nxt.locator.find_one_brick(debug=True, confpath=conf)
 
     config = []
 
@@ -533,4 +535,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
